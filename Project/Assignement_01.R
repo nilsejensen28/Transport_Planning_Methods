@@ -31,10 +31,10 @@ df_trips_byHHDEGURBA <- df_wegeInland_hh %>%
                 "Number of trips" = n_trips,
                 People = people,
                 "Average daily trips" = avg_daily_trips)
-df_trips_byHHDEGURBA %>% gt()
+df_trips_byHHDEGURBA %>% gt() %>% write.csv("plots/table_1_1.csv", row.names=TRUE)
 
 ################################################################################
-#Task 1.2 - Average distance traveled by individual
+#Task 1.2 - Average daily distance traveled by individual
 ################################################################################
 df_trip_distance <- df_wegeInland_hh %>%
   mutate(w_rdist = coalesce(w_rdist, 0)) %>%
@@ -48,7 +48,7 @@ df_trip_distance <- df_wegeInland_hh %>%
                                W_DEGURBA == 3 ~ "Countryside")) %>% 
   dplyr::rename(Density = W_DEGURBA, 
                 "Average distance" = avg_distance)
-df_trip_distance %>% gt()
+df_trip_distance %>% gt() %>% write.csv("plots/table_1_2.csv", row.names=TRUE)
 
 ################################################################################
 #Task 1.3 - Average number of trips reported per weekday
@@ -152,7 +152,7 @@ plot_1_5_a <- df_mode_location_individual %>% ggplot(aes(x=labels_x, y=n_trips, 
   geom_bar(stat = "identity") + 
   theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
   geom_text(aes(x=label_x, n_trips, label = n_trips, fill = NULL), data = df_totals_by_class, vjust=-0.5, ) +
-  geom_text(aes(y = pos, label = label_percentage), size = 3) +
+  geom_text(aes(y = pos, label = label_percentage), size = 4, color="white") +
   scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport Mode") +
   labs(x="Public transport accessibility", y="Number of trips", title="Mode share vs. public transport accesibility")
 #Save to file
@@ -186,10 +186,32 @@ df_mode_location_pkm$labels_x <- str_wrap(df_mode_location_pkm$W_OEV_KLASSE, wid
 
 #Plot for part b
 plot_1_5_b <- df_mode_location_pkm %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
-  geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
-  geom_text(aes(label_x, distance, label = distance, fill = NULL), data = df_totals_by_class, vjust=-0.5) +
-  geom_text(aes(y = pos, label = label_percentage), size = 4) +
-  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport Mode") +
+  geom_bar(stat = "identity") +
+  #Total of each bar label
+  geom_text(aes(label_x, distance, label = distance, fill = NULL), 
+            data = df_totals_by_class, 
+            vjust=-0.5, #Adjust it to slightly higher
+            size = 3) +
+  #Percentage labels
+  geom_text(aes(y = pos, label = label_percentage), 
+            size = 3, 
+            color="white") +
+  #Color of the different sections
+  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), 
+                    name="Transport mode") + #Name of the legend
+  #General tweaks to the theme
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10), 
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  
   labs(x="Public transport accessibility", y="Person km", title="Mode share vs. public transport accesibility")
 #Save to file
 ggsave(plot_1_5_b, filename = "plots/plot_1_5_b.svg")
@@ -248,13 +270,34 @@ df_mode_purpose_sum$labels_x <- str_wrap(df_mode_purpose_sum$wzweck3, width=20)
 
 #Plot 
 plot_1_6 <- df_mode_purpose_sum %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
-  geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
-  geom_text(aes(label_x, distance, label = distance, fill = NULL), data = df_totals_by_class, vjust=-0.5) +
-  geom_text(aes(y = pos, label = label_percentage), size = 4) +
-  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport mode") +
+  geom_bar(stat = "identity") +
+  #Total of each bar label
+  geom_text(aes(label_x, distance, label = distance, fill = NULL), 
+            data = df_totals_by_class, 
+            vjust=-0.5, #Adjust it to slightly higher
+            size = 3) +
+  #Percentage labels
+  geom_text(aes(y = pos, label = label_percentage), 
+            size = 3, 
+            color="white") +
+  #Color of the different sections
+  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), 
+                    name="Transport mode") + #Name of the legend
+  #General tweaks to the theme
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
   labs(x="Trip purpose", y="Person km", title="Mode share vs. trip purpose")
 #Save to file
 ggsave(plot_1_6, filename = "plots/plot_1_6.svg")
-
+plot_1_6
   
 
