@@ -6,6 +6,7 @@ library(gt) #Make nice tables
 library(mmtable2) #Make nice tables
 library(plyr) #Needed for ddply
 library(wesanderson) #Nice color palette
+library(svglite) #Allows for SVG
 options(scipen = 999) #No scientific notation
 ################################################################################
 #Read in the data
@@ -68,10 +69,11 @@ df_weekday <- df_all %>%
                          Tag == 7 ~ "Sunday"))
 df_weekday$Tag <- factor(df_weekday$Tag, 
     c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday", "Sunday")) 
-df_weekday %>% ggplot(aes(y=n_trips, x=Tag)) + 
+plot_1_3 <- df_weekday %>% ggplot(aes(y=n_trips, x=Tag)) + 
   geom_col(fill=wes_palette("GrandBudapest1", n=1)) +
   labs(x = "Weekday", y = "Number of trips", title = "Average number of trips reported per weekday")
-
+#Save to file
+ggsave(plot_1_3, filename = "plots/plot_1_3.svg")
 ################################################################################
 #Task 1.4 - Traveled distances by individual vs. household income
 ################################################################################
@@ -98,12 +100,12 @@ df_distance_income$f20601 <- factor(df_distance_income$f20601, c(
   "Under CHF 2000", "CHF 2000 to 4000", "CHF 4001 to 6000", "CHF 6001 to 8000", 
   "CHF 8001 to 10000", "CHF 10001 to 12000", "CHF 12001 to 14000",
   "CHF 14001 to 16000", "More than to 16000"))
-df_distance_income %>% ggplot(aes(x=f20601, y=distance)) + 
+plot_1_4 <- df_distance_income %>% ggplot(aes(x=f20601, y=distance)) + 
   geom_col(fill=wes_palette("GrandBudapest1", n=1)) +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
   labs(x = "Household income", y = "Daily travel distance", title = "Traveled distances by individual vs. household income")
-
-
+#Save to file
+ggsave(plot_1_4, filename = "plots/plot_1_4.svg")
 ################################################################################
 #Task 1.5 - Mode share by public transport-accessibility of household location
 ################################################################################
@@ -146,13 +148,16 @@ df_mode_location_individual$label_percentage <- paste0(sprintf("%.0f", df_mode_l
 df_mode_location_individual$labels_x <- str_wrap(df_mode_location_individual$W_OEV_KLASSE, width=20) 
 
 #Plot for part a
-df_mode_location_individual %>% ggplot(aes(x=labels_x, y=n_trips, fill=wmittel2a)) +
+plot_1_5_a <- df_mode_location_individual %>% ggplot(aes(x=labels_x, y=n_trips, fill=wmittel2a)) +
   geom_bar(stat = "identity") + 
   theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
   geom_text(aes(x=label_x, n_trips, label = n_trips, fill = NULL), data = df_totals_by_class, vjust=-0.5, ) +
   geom_text(aes(y = pos, label = label_percentage), size = 3) +
   scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport Mode") +
   labs(x="Public transport accessibility", y="Number of trips", title="Mode share vs. public transport accesibility")
+#Save to file
+ggsave(plot_1_5_a, filename = "plots/plot_1_5_a.svg")
+
 #Part b: computation with pkm
 
 #Use to show the totals over one column
@@ -180,13 +185,14 @@ df_mode_location_pkm$label_percentage <- paste0(sprintf("%.0f", df_mode_location
 df_mode_location_pkm$labels_x <- str_wrap(df_mode_location_pkm$W_OEV_KLASSE, width=20) 
 
 #Plot for part b
-df_mode_location_pkm %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
+plot_1_5_b <- df_mode_location_pkm %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
   geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
   geom_text(aes(label_x, distance, label = distance, fill = NULL), data = df_totals_by_class, vjust=-0.5) +
   geom_text(aes(y = pos, label = label_percentage), size = 4) +
   scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport Mode") +
   labs(x="Public transport accessibility", y="Person km", title="Mode share vs. public transport accesibility")
-
+#Save to file
+ggsave(plot_1_5_b, filename = "plots/plot_1_5_b.svg")
 ################################################################################
 #Task 1.6 - Mode share by trip purpose
 ################################################################################
@@ -241,12 +247,14 @@ df_mode_purpose_sum <- dplyr::mutate(df_mode_purpose_sum, label_percentage = ife
 df_mode_purpose_sum$labels_x <- str_wrap(df_mode_purpose_sum$wzweck3, width=20) 
 
 #Plot 
-df_mode_purpose_sum %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
+plot_1_6 <- df_mode_purpose_sum %>% ggplot(aes(x=labels_x, y=distance, fill=wmittel2a)) +
   geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
   geom_text(aes(label_x, distance, label = distance, fill = NULL), data = df_totals_by_class, vjust=-0.5) +
   geom_text(aes(y = pos, label = label_percentage), size = 4) +
   scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport mode") +
   labs(x="Trip purpose", y="Person km", title="Mode share vs. trip purpose")
+#Save to file
+ggsave(plot_1_6, filename = "plots/plot_1_6.svg")
 
   
 
