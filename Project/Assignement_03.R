@@ -59,6 +59,7 @@ wege <- df_wegeInland %>%
 #Filter the original wege 
 wege <- wege[wege$weg_id %in% zone_Start$weg_id,]
 wege <- wege[wege$weg_id %in% zone_Ziel$weg_id,]
+number_of_cencus_trips <- n_distinct(wege$weg_id)
 
 wege_Start <- wege_Start[wege_Start$weg_id %in% wege$weg_id, ]
 wege_Ziel <- wege_Ziel[wege_Ziel$weg_id %in% wege$weg_id, ]
@@ -113,6 +114,8 @@ npvm_cent_end <- npvm_centroids
 wegeOD$start <- left_join(wegeOD, npvm_cent_start, by=c("start_row.id"="row_id"))
 wegeOD$end <- left_join(wegeOD, npvm_cent_end, by=c("ziel_row.id"="row_id"))
 
+wege_census <- wegeOD #We will use this latter
+
 #Now write code to create the linestrings with the OD demand between zones and plot them weighting the lines according to the number of trips. 
 od_lines_sf <- mapply(create_linestring, wegeOD$start$geometry, wegeOD$end$geometry,
                       SIMPLIFY = FALSE)
@@ -149,7 +152,7 @@ sum(npvm_zones$ZoneVZA)
 sum(npvm_zones$ZonePop)
 
 #1-first check consistency of the start and end zones of the trips (all starts gave to have ends): 
-factor <- 1 #choose here the scaling factor that estimates how many of the employees actually live in the area. 
+factor <- 0.85 #choose here the scaling factor that estimates how many of the employees actually live in the area. 
 scaling <- sum(npvm_zones$ZoneVZA)/sum(npvm_zones$ZonePop)#This scaling factor is used to ensure that all trips that start have an end in our model
 
 npvm_zones$Empl_Furness <- factor * npvm_zones$ZoneVZA / scaling
@@ -214,7 +217,6 @@ tt_noTravelTimes2 <- as.data.frame(tt_noTravelTimes)
 tt_noTravelTimes2 <- tt_noTravelTimes2[,-1]
 
 tt_noTravelTimes2$row.id <- noTravelTimes$start_row.id
-tt_noTravelTimes2
 
 #Fill the gaps. 
 for (k in 1:nrow(gc_trips)){
@@ -242,7 +244,6 @@ gc_trips$travelTime <- ifelse(is.na(gc_trips$trips), gc_trips$travelTime*1.25, g
 zones <- npvm_zones$row_id
 n <- length(zones)
 gc <- matrix(0, n, n)
-sub_vector <- gc_trips[gc_trips$start_row.id==1,]
 
 for (i in 1:n){
   sub_vector <- gc_trips[gc_trips$start_row.id==i,]
@@ -306,7 +307,6 @@ distribution <- ipf(zones, as.matrix(npvm_zones$Pop_Furness), as.matrix(npvm_zon
 
 trips_matrix <- distribution["trips"]$trips
 trip_df <- data.frame("start_row.id" = numeric(), "ziel_row.id"= numeric(), "trips"= numeric())
-trip_df
 for (i in 1:n){
   for(j in 1:n){
     trip_df <- trip_df %>% 
@@ -314,21 +314,22 @@ for (i in 1:n){
   }
 }
 
-wegeOD$start <- left_join(wegeOD, npvm_cent_start, by=c("start_row.id"="row_id"))
-wegeOD$end <- left_join(wegeOD, npvm_cent_end, by=c("ziel_row.id"="row_id"))
+trip_df$start <- left_join(trip_df, npvm_cent_start, by=c("start_row.id"="row_id"))
+trip_df$end <- left_join(trip_df, npvm_cent_end, by=c("ziel_row.id"="row_id"))
 
 od_lines_sf <- mapply(create_linestring, trip_df$start$geometry, trip_df$end$geometry,
                       SIMPLIFY = FALSE)
 od_lines_sf <- st_sf(geometry = st_sfc(od_lines_sf))
 od_lines_sf <- st_set_crs(od_lines_sf, 4326)
 od_lines_sf <- od_lines_sf %>%
-  mutate(trips = wegeOD$trips)
+  mutate(trips = trip_df$trips)
 
 od_lines_sf <- od_lines_sf %>%
-  filter(trips > 5)
+  filter(trips > 400)
 
 ggplot()+
   geom_sf(data=npvm_zones, aes(fill=ZonePop))+
   geom_sf(data=od_lines_sf, aes(linewidth = trips))
-
 #Now check how well the algorithm worked for representing the trips....
+
+scaling_factor <- number_of_cencus_trips/sum(npvm_zones$Pop_Furness)
