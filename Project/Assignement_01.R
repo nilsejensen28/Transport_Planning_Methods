@@ -124,37 +124,63 @@ df_mode_location <- df_hh %>%
   filter(wmittel2a > 0) %>% 
   filter(!is.na(W_OEV_KLASSE)) 
 
-#Part a: computation with number of trips
+#Part a: computation with average distance of each trip
 
 #Use to show the totals over one column
 df_totals_by_class <- df_mode_location %>% 
+  ddply(.(W_OEV_KLASSE), transform, people_total = n_distinct(HHNR)) %>% 
+  group_by(W_OEV_KLASSE, wmittel2a) %>% 
+  dplyr::summarise(distance = sum(w_rdist), people_total= mean(people_total), .groups = "keep") %>% 
+  ddply(.(W_OEV_KLASSE), transform, average_distance = distance/people_total) %>% 
   group_by(W_OEV_KLASSE) %>% 
-  filter(wmittel2a > 0) %>%
-  filter(!is.na(W_OEV_KLASSE)) %>% 
-  dplyr::summarise(n_trips = n()) 
+  dplyr::summarise(sum_average_distance = sum(average_distance)) %>% 
+  mutate(sum_average_distance = round(sum_average_distance, 2))
   df_totals_by_class$label_x <- str_wrap(df_totals_by_class$W_OEV_KLASSE, width=20) 
 
 #Summarise the data
 df_mode_location_individual <- df_mode_location %>% 
+  ddply(.(W_OEV_KLASSE), transform, people_total = n_distinct(HHNR)) %>% 
   group_by(W_OEV_KLASSE, wmittel2a) %>% 
-  dplyr::summarise(n_trips = n(), .groups = "keep") 
+  dplyr::summarise(distance = sum(w_rdist), people_total= mean(people_total), .groups = "keep") %>% 
+  ddply(.(W_OEV_KLASSE), transform, average_distance = distance/people_total)
   
 #Calculate the percentages
-df_mode_location_individual <- ddply(df_mode_location_individual, .(W_OEV_KLASSE), transform, percent = n_trips/sum(n_trips) * 100)
-df_mode_location_individual <- ddply(df_mode_location_individual, .(W_OEV_KLASSE), transform, pos = sum(n_trips) - cumsum(n_trips) + 0.5 * n_trips)
+df_mode_location_individual <- ddply(df_mode_location_individual, .(W_OEV_KLASSE), transform, percent = average_distance/sum(average_distance) * 100)
+df_mode_location_individual <- ddply(df_mode_location_individual, .(W_OEV_KLASSE), transform, pos = sum(average_distance) - cumsum(average_distance) + 0.5 * average_distance)
 df_mode_location_individual$label_percentage <- paste0(sprintf("%.0f", df_mode_location_individual$percent), "%")
 
 #Line break for the labels on the x-axis
 df_mode_location_individual$labels_x <- str_wrap(df_mode_location_individual$W_OEV_KLASSE, width=20) 
 
 #Plot for part a
-plot_1_5_a <- df_mode_location_individual %>% ggplot(aes(x=labels_x, y=n_trips, fill=wmittel2a)) +
-  geom_bar(stat = "identity") + 
-  theme(axis.text.x = element_text(angle = 45, hjust=1)) + 
-  geom_text(aes(x=label_x, n_trips, label = n_trips, fill = NULL), data = df_totals_by_class, vjust=-0.5, ) +
-  geom_text(aes(y = pos, label = label_percentage), size = 4, color="white") +
-  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), name="Transport Mode") +
-  labs(x="Public transport accessibility", y="Number of trips", title="Mode share vs. public transport accesibility")
+plot_1_5_a <- df_mode_location_individual %>% ggplot(aes(x=labels_x, y=average_distance, fill=wmittel2a)) +
+  geom_bar(stat = "identity") +
+  #Total of each bar label
+  geom_text(aes(label_x, sum_average_distance, label = sum_average_distance, fill = NULL), 
+            data = df_totals_by_class, 
+            vjust=-0.5, #Adjust it to slightly higher
+            size = 3) +
+  #Percentage labels
+  geom_text(aes(y = pos, label = label_percentage), 
+            size = 3, 
+            color="white") +
+  #Color of the different sections
+  scale_fill_manual(values=wes_palette("GrandBudapest1", n=4, type = "discrete"), 
+                    name="Transport mode") + #Name of the legend
+  #General tweaks to the theme
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10), 
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  
+  labs(x="Public transport accessibility", y="Average distance per person", title="Mode share vs. public transport accesibility")
 #Save to file
 ggsave(plot_1_5_a, filename = "plots/plot_1_5_a.svg")
 

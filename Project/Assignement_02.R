@@ -9,6 +9,8 @@ library(wesanderson) #Nice color palette
 library(svglite) #Allows for SVG
 library(MASS)
 library(glmnet)
+library(ggplot2)
+library(tidyr)
 options(scipen = 999) #No scientific notation
 ################################################################################
 #Read in the data
@@ -46,55 +48,179 @@ df <- full_join(df_personen, df_hh, by=c("HHNR")) %>%
                 "person.weight" = "f81502",
                 "household.oev_availibility" = "W_OEV_KLASSE",
                 "household.degree_urbanization" = "W_DEGURBA",
-                "household.car_ownership" = "f30100",
+                "household.number_of_cars" = "f30100",
+                "household.number_of_bikes" = "f32200a",
                 "household.size" = "hhgr",
-                "household.income" = "f20601"
-                ) 
+                "household.income" = "f20601") %>% 
+  filter(person.age > 0) %>% 
+  filter(household.size > 0) %>% 
+  filter(household.number_of_cars >= 0) 
 
 #Create dummy_variables
-df$person.man <- ifelse(df$person.sex == 1, 1, 0)
-df$person.woman <- ifelse(df$person.sex == 2, 1, 0)
-df$person.has_GA <- ifelse(df$person.GA == 1, 1, 0)
-df$person.has_halbtax <- ifelse(df$person.halbtax == 1, 1, 0)
-df$household.has_car <- ifelse(df$household.car_ownership == 1, 1, 0)
-df$person.has_driverlicence <- ifelse(df$person.drivers_licence == 1, 1, 0)
-df$person.always_works_from_home <- ifelse(df$person.homeoffice == 1, 1, 0)
-df$person.happens_works_from_home <- ifelse(df$person.homeoffice == 2, 1, 0)
-df$person.uses_wheelchair <- ifelse(df$person.wheelchair == 1, 1, 0)
-df$household.in_city <- ifelse(df$household.degree_urbanization == 1, 1, 0)
-df$household.in_countryside <- ifelse(df$household.degree_urbanization == 3, 1, 0)
-df$person.unemployed <- ifelse(df$person.employement == -99, 1, 0)
+df$person.is_man <- as.factor(ifelse(df$person.sex == 1, "Man", "Not man"))
+df$person.has_GA <- as.factor(ifelse(df$person.GA == 1, "GA", "No GA"))
+df$person.has_halbtax <- as.factor(ifelse(df$person.halbtax == 1, "Halbtax", "No halbtax"))
+df$household.has_car <- as.factor(ifelse(df$household.number_of_cars >= 1, "Has car", "No car"))
+df$household.has_bike <- as.factor(ifelse(df$household.number_of_bikes >= 1, "Has bike", "No bike"))
+df$person.has_driverlicence <- as.factor(ifelse(df$person.drivers_licence == 1, "Has driving licence", "No driving licence"))
+df$person.always_works_from_home <- as.factor(ifelse(df$person.homeoffice == 1, "Always homeoffice", "Other"))
+df$person.happens_works_from_home <- as.factor(ifelse(df$person.homeoffice == 2, "Sometimes homeoffice", "Other"))
+df$person.uses_wheelchair <- as.factor(ifelse(df$person.wheelchair == 1, "Wheelchair user", "Other"))
+df$household.in_city <- as.factor(ifelse(df$household.degree_urbanization == 1, "City", "Other"))
+df$household.in_countryside <- as.factor(ifelse(df$household.degree_urbanization == 3, "Countryside", "Other"))
+df$person.is_unemployed <- as.factor(ifelse(df$person.employement == 4, "Unemployed", "Employed"))
 
-lin_model <- lm(n_trips ~ person.stellenprozente_home, df)
+#Add quadratic variables
+df$person.age_squared = df$person.age**2
+df$household.income_squared = df$household.income**2
+df$person.age_log = log(df$person.age)
+df$household.size_log = log(df$household.size)
+df$household.size_squared = df$household.size**2
+
+# function for computing mean, DS, max and min values
+min.mean.sd.max <- function(x) {
+  r <- c(min(x), mean(x) - sd(x), mean(x), mean(x) + sd(x), max(x))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+#Remove outliers
+df <- df %>% 
+  filter(n_trips < 10)
+
+#Visualize the different dummy variables
+plot.is_man <- ggplot(df, aes(x=person.is_man, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.has_GA <- ggplot(df, aes(x=person.has_GA, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.has_halbtax <- ggplot(df, aes(x=person.has_halbtax, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.has_car <- ggplot(df, aes(x=household.has_car, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.has_bike <- ggplot(df, aes(x=household.has_bike, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.has_driverlicence <- ggplot(df, aes(x=person.has_driverlicence, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.always_works_from_home <- ggplot(df, aes(x=person.always_works_from_home, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.happens_wors_from_home <- ggplot(df, aes(x=person.happens_works_from_home, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.uses_wheelchair <- ggplot(df, aes(x=person.uses_wheelchair, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.in_city <- ggplot(df, aes(x=household.in_city, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.in_countryside <- ggplot(df, aes(x=household.in_countryside, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+plot.is_unemployed <- ggplot(df, aes(x=person.is_unemployed, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+
+library(gridExtra)
+
+grid.arrange(plot.is_man,
+             plot.has_GA,
+             plot.has_halbtax,
+             plot.has_car,
+             plot.has_bike,
+             plot.has_driverlicence,
+             plot.always_works_from_home,
+             plot.happens_wors_from_home,
+             plot.uses_wheelchair,
+             plot.in_city,
+             plot.in_countryside,
+             plot.is_unemployed,
+             nrow=4)
+
+
+#Create factor variable
+df$household.degree_urbanization <- as.factor(df$household.degree_urbanization)
+
+#Making sense of the data
+hist(df$n_trips)
+mean(df$n_trips) # calculate mean
+var(df$n_trips)
+
+df_train <- df[0:45000,]
+df_test <- df[45001:53781,]
+
+lin_model <- glm(n_trips ~  person.has_driverlicence
+                + household.oev_availibility
+                + person.has_GA
+                + household.has_bike
+                + person.is_unemployed
+                + person.uses_wheelchair
+                + person.happens_works_from_home
+                + person.always_works_from_home
+                + person.age
+                + household.size
+                + household.size_squared
+                + household.size_log
+                + person.age_squared
+                + person.age_log
+                + household.number_of_cars
+                , data=df_train, family=poisson(link="identity"))
+anova(lin_model)
 summary(lin_model)
+par(mfrow = c(2, 2))
+plot(lin_model)
 
-pairs(n_trips ~ person.stellenprozente_home, df)
+df_test$prediction <- predict(lin_model, df_test)
 
-library(MASS)
-library(tree)
-library(rpart)
-data = df[, c("person.age",
-              "person.man",
-              "person.has_GA",
-              "person.has_halbtax",
-              "person.always_works_from_home",
-              "person.uses_wheelchair",
-              "household.in_city",
-              "household.in_countryside",
-              "household.oev_availibility",
-              "person.has_driverlicence",
-              "household.income",
-              "n_trips",
-              "person.unemployed")]
-control = rpart.control(minsplit = 10L, cp=0.0002)
-tree = rpart(n_trips ~ ., data=data, control=control)
-summary(tree)
-plot(tree)
-text(tree, pretty = 0)
+legend_colors <- c("n_trips" = "red", "prediction" = "blue")
 
-library(rpart.plot)
-prp(tree)
+ggplot(data = df_test) + 
+  geom_smooth(aes(x = person.age, y = n_trips, color = "n_trips"), method = "loess") + 
+  geom_smooth(aes(x = person.age, y = prediction, color = "prediction"), method="loess") + 
+  labs(color = "the legend") + 
+  scale_color_manual(values = legend_colors) + 
+  theme_bw()
 
-set.seed(18)
-tree_cv = cv.tree(tree)
+df_plot_1 <- df_test%>% dplyr::select(-c("n_trips"))
+df_plot_1["type"] <- "prediction"
+df_plot_1 <- df_plot_1 %>%  dplyr::rename("n_trips" = "prediction")
+df_plot_2 <- df_test%>% dplyr::select(-c("prediction"))
+df_plot_2["type"] <- "test_data"
+df_plot <- rbind(df_plot_1, df_plot_2)
+df_plot$type <- as.factor(df_plot$type)
+
+plot_styled <- function(plot){
+  plot <- plot +
+    stat_summary(fun.data = min.mean.sd.max, geom = "boxplot", aes(fill=type), position = position_dodge(width = 1), show.legend = FALSE) + 
+    scale_fill_manual(values=wes_palette("GrandBudapest1", n=2, type = "discrete"), name="") + 
+    labs(x="", y="Number of trips") +
+    theme(panel.grid = element_blank(), 
+          panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+          panel.grid.major.y = element_line(color="gray", size=0.4),
+          axis.text=element_text(size=9), #Size of axis numbering
+          axis.text.x = element_text(angle = 0, hjust=0.5), #Tilting of axis numbering
+          axis.title=element_text(size=9)) #Size of axis title
+  return(plot)
+}
+
+
+plot.is_man <- ggplot(df_plot, aes(x=person.is_man, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot", aes(fill=type), position = position_dodge(width = 1)) + scale_fill_manual(values=wes_palette("GrandBudapest1", n=2, type = "discrete"), name="") + labs(x="", y="Number of trips") + theme(legend.position="bottom", legend.text=element_text(size=10), legend.title=element_text(size=11, face="bold"), legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"))
+plot.has_GA <- plot_styled(ggplot(df_plot, aes(x=person.has_GA, y=n_trips)))
+plot.has_halbtax <- plot_styled(ggplot(df_plot, aes(x=person.has_halbtax, y=n_trips)))
+plot.has_car <- plot_styled(ggplot(df_plot, aes(x=household.has_car, y=n_trips)))
+plot.has_bike <- plot_styled(ggplot(df_plot, aes(x=household.has_bike, y=n_trips)))
+plot.has_driverlicence <- plot_styled(ggplot(df_plot, aes(x=person.has_driverlicence, y=n_trips)))
+plot.always_works_from_home <- plot_styled(ggplot(df_plot, aes(x=person.always_works_from_home, y=n_trips)))
+plot.happens_works_from_home <- plot_styled(ggplot(df_plot, aes(x=person.happens_works_from_home, y=n_trips)))
+plot.uses_wheelchair <- plot_styled(ggplot(df_plot, aes(x=person.uses_wheelchair, y=n_trips)))
+plot.in_city <- plot_styled(ggplot(df_plot, aes(x=household.in_city, y=n_trips)))
+plot.in_countryside <- plot_styled(ggplot(df_plot, aes(x=household.in_countryside, y=n_trips)))
+plot.is_unemployed <- plot_styled(ggplot(df_plot, aes(x=person.is_unemployed, y=n_trips)))
+
+#extract legend
+#https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
+g_legend <- function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)}
+legend <-g_legend(plot.is_man)
+plot.is_man <- plot_styled(ggplot(df_plot, aes(x=person.is_man, y=n_trips)))
+
+library(grid)
+
+grid.arrange(arrangeGrob(plot.is_man,
+             plot.has_GA,
+             plot.has_halbtax,
+             plot.has_car,
+             plot.has_bike,
+             plot.has_driverlicence,
+             plot.always_works_from_home,
+             plot.happens_works_from_home,
+             plot.uses_wheelchair,
+             plot.in_city,
+             plot.in_countryside,
+             plot.is_unemployed,
+             nrow=4), legend, nrow=2, heights=c(13, 1), top = textGrob("Prediction vs. real values on test set",gp=gpar(fontsize=15,face="bold"))) 
 
