@@ -206,12 +206,10 @@ network <- weight_streetnet(network, wt_profile = "motorcar")
 #network_car <- weight_streetnet(network, wt_profile = "motorcar")
 
 noTravelTimes <- noTravelTimes[is.na(noTravelTimes$travelTime),]
-noTravelTimes[, "geometry.x"]
-RcppParallel::setThreadOptions (numThreads = 8L) # or desired number
-coordsOrigin[, ]
-coordsDest[, ]
-tt_noTravelTimes <- (dodgr_times(graph=network, from=noTravelTimes["geometry.x"], to=noTravelTimes["geometry.y"])) #this takes a while (hours).
-save(tt_noTravelTimes,file="tt_noTravelTimes.Rda")
+RcppParallel::setThreadOptions (numThreads = 10L) # or desired number
+tt_noTravelTimes <- (dodgr_times(graph=network, from=coordsOrigin, to=coordsDest)) #this takes a while (hours).
+#save(tt_noTravelTimes,file="tt_noTravelTimes.Rda")
+load(file="tt_noTravelTimes.Rda")
 tt_noTravelTimes2 <- as.data.frame(tt_noTravelTimes)
 tt_noTravelTimes2 <- tt_noTravelTimes2[,-1]
 
@@ -242,6 +240,16 @@ gc_trips$travelTime <- ifelse(is.na(gc_trips$trips), gc_trips$travelTime*1.25, g
 #Now write a function that applies the Furness method!
 #First: set an arbitrary value for travel times 
 zones <- npvm_zones$row_id
+n <- length(zones)
+gc <- matrix(0, n, n)
+sub_vector <- gc_trips[gc_trips$start_row.id==1,]
+
+for (i in 1:n){
+  sub_vector <- gc_trips[gc_trips$start_row.id==i,]
+  for (j in 1:n){
+    gc[i, j] <- sub_vector[sub_vector$ziel_row.id==j, "travelTime"][[1]]
+  }
+}
 
 # Furness Method 
 ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix format!
@@ -256,7 +264,7 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
   # del is the coefficient assessing the changes of beta after each iteration
   del <- 1
   # eps is the boundry for ending the iteration
-  error_bound <- 0.000000000000000001
+  error_bound <- 0.0000000000001
   
   # vectors containing sum of rows (origins) and columns (destinations)
   sum_rows <- outgoing
@@ -270,8 +278,10 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
   
   repeat {
     for (i in 1:n) {
-      alpha_o_new[i] <- sum_rows[i]/(sum(alpha_d_new[i-1]*gcosts[i,]))
-      alpha_d_new[i] <- sum_cols[i]/(sum(alpha_o_new[i]*gcosts[i,]))
+      alpha_o_new[i] <- sum_rows[i]/(sum(alpha_d_new*gcosts[i,]))
+    }
+    for (i in 1:n) {
+      alpha_d_new[i] <- sum_cols[i]/(sum(alpha_o_new*gcosts[,i]))
     }
     # Compute the flows
     for (i in 1:n) {
@@ -281,19 +291,44 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
     }
     trips[1:n,n+1] <- rowSums(trips[1:n,1:n])
     trips[n+1, 1:n] <- colSums(trips[1:n, 1:n])
-    error = 0.0
+    error <- 0.0
     for(i in 1:n){
       error = error + abs(trips[i, n+1] - sum_rows[i])/sum_rows[i]
     }
     if(error < error_bound){
       return(list(iteration=iteration,trips=trips,alpha_o=alpha_o_new,alpha_o_d=alpha_d_new))
     }
-    print(error)
   }
 }
 
 #Apply the function
-distribution <- ipf(zones, npvm_zones$Pop_Furness, npvm_zones$Empl_Furness, gc)
+distribution <- ipf(zones, as.matrix(npvm_zones$Pop_Furness), as.matrix(npvm_zones$Empl_Furness), gc)
 
+trips_matrix <- distribution["trips"]$trips
+trip_df <- data.frame("start_row.id" = numeric(), "ziel_row.id"= numeric(), "trips"= numeric())
+trip_df
+for (i in 1:n){
+  for(j in 1:n){
+    trip_df <- trip_df %>% 
+      dplyr::add_row(start_row.id=i, ziel_row.id=j, trips=trips_matrix[i, j])
+  }
+}
+
+wegeOD$start <- left_join(wegeOD, npvm_cent_start, by=c("start_row.id"="row_id"))
+wegeOD$end <- left_join(wegeOD, npvm_cent_end, by=c("ziel_row.id"="row_id"))
+
+od_lines_sf <- mapply(create_linestring, trip_df$start$geometry, trip_df$end$geometry,
+                      SIMPLIFY = FALSE)
+od_lines_sf <- st_sf(geometry = st_sfc(od_lines_sf))
+od_lines_sf <- st_set_crs(od_lines_sf, 4326)
+od_lines_sf <- od_lines_sf %>%
+  mutate(trips = wegeOD$trips)
+
+od_lines_sf <- od_lines_sf %>%
+  filter(trips > 5)
+
+ggplot()+
+  geom_sf(data=npvm_zones, aes(fill=ZonePop))+
+  geom_sf(data=od_lines_sf, aes(linewidth = trips))
 
 #Now check how well the algorithm worked for representing the trips....
