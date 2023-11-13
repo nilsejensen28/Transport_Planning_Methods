@@ -2,16 +2,16 @@ library(data.table)
 library(magrittr) #Allows to use %>% 
 library(dplyr)
 library(tidyverse) #Make nice plots
-library(gt) #Make nice tables
-library(mmtable2) #Make nice tables
 library(plyr) #Needed for ddply
 library(wesanderson) #Nice color palette
-library(svglite) #Allows for SVG
 library(MASS)
 library(glmnet)
 library(ggplot2)
 library(tidyr)
+library(gridExtra) #Make grid plots
+library(svglite) #Allows for SVG Files
 options(scipen = 999) #No scientific notation
+
 ################################################################################
 #Read in the data
 ################################################################################
@@ -26,12 +26,23 @@ df_personen_trips <- df_personen %>%
   group_by(HHNR) %>% 
   dplyr::summarise(n_trips=n())
 
+#Add all household without trips
+households_with_trips <- unique(df_wegeInland$HHNR)
+df_households_without_trips <- df_hh %>% 
+  filter(!(HHNR %in% households_with_trips)) %>% 
+  dplyr::select(c("HHNR"))
+df_households_without_trips$n_trips <- 0
+
+df_personen_trips <- rbind(df_personen_trips, df_households_without_trips)
+  
 #Adds the number of daily trips to the data
 df_personen <- join(df_personen, df_personen_trips, by=c("HHNR"))
 
 df_all <- full_join(df_personen, df_hh, by=c("HHNR")) %>% lapply(., iconv, to = "UTF-8") %>% tibble::as_tibble()
-
+###############################################################################
 #Make the data more readable
+###############################################################################
+
 df <- full_join(df_personen, df_hh, by=c("HHNR")) %>% 
   dplyr::rename("person.id" = "HHNR",
                 "person.age" = "alter",
@@ -56,7 +67,9 @@ df <- full_join(df_personen, df_hh, by=c("HHNR")) %>%
   filter(household.size > 0) %>% 
   filter(household.number_of_cars >= 0) 
 
+###############################################################################
 #Create dummy_variables
+###############################################################################
 df$person.is_man <- as.factor(ifelse(df$person.sex == 1, "Man", "Not man"))
 df$person.has_GA <- as.factor(ifelse(df$person.GA == 1, "GA", "No GA"))
 df$person.has_halbtax <- as.factor(ifelse(df$person.halbtax == 1, "Halbtax", "No halbtax"))
@@ -88,48 +101,63 @@ min.mean.sd.max <- function(x) {
 #df <- df %>% 
   #filter(n_trips < 10)
 
+###############################################################################
 #Visualize the different dummy variables
-plot.is_man <- ggplot(df, aes(x=person.is_man, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.has_GA <- ggplot(df, aes(x=person.has_GA, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.has_halbtax <- ggplot(df, aes(x=person.has_halbtax, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.has_car <- ggplot(df, aes(x=household.has_car, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.has_bike <- ggplot(df, aes(x=household.has_bike, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.has_driverlicence <- ggplot(df, aes(x=person.has_driverlicence, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.always_works_from_home <- ggplot(df, aes(x=person.always_works_from_home, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.happens_wors_from_home <- ggplot(df, aes(x=person.happens_works_from_home, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.uses_wheelchair <- ggplot(df, aes(x=person.uses_wheelchair, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.in_city <- ggplot(df, aes(x=household.in_city, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.in_countryside <- ggplot(df, aes(x=household.in_countryside, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
-plot.is_unemployed <- ggplot(df, aes(x=person.is_unemployed, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
+###############################################################################
+plot_styled <- function(plot){
+  plot <- plot +
+    stat_summary(fun.data = min.mean.sd.max, geom = "boxplot", fill=wes_palette("GrandBudapest1", n=2)[2]) + 
+    labs(x="", y="Number of trips") +
+    theme(panel.grid = element_blank(), 
+          panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+          panel.grid.major.y = element_line(color="gray", size=0.4),
+          axis.text=element_text(size=9), #Size of axis numbering
+          axis.text.x = element_text(angle = 0, hjust=0.5), #Tilting of axis numbering
+          axis.title=element_text(size=9)) #Size of axis title
+  return(plot)
+}
 
-library(gridExtra)
+plot.is_man <- plot_styled(ggplot(df, aes(x=person.is_man, y=n_trips)))
+plot.has_GA <- plot_styled(ggplot(df, aes(x=person.has_GA, y=n_trips)))
+plot.has_halbtax <- plot_styled(ggplot(df, aes(x=person.has_halbtax, y=n_trips)))
+plot.has_car <- plot_styled(ggplot(df, aes(x=household.has_car, y=n_trips)))
+plot.has_bike <- plot_styled(ggplot(df, aes(x=household.has_bike, y=n_trips)))
+plot.has_driverlicence <- plot_styled(ggplot(df, aes(x=person.has_driverlicence, y=n_trips)))
+plot.always_works_from_home <- plot_styled(ggplot(df, aes(x=person.always_works_from_home, y=n_trips)))
+plot.happens_wors_from_home <- plot_styled(ggplot(df, aes(x=person.happens_works_from_home, y=n_trips)))
+plot.uses_wheelchair <- plot_styled(ggplot(df, aes(x=person.uses_wheelchair, y=n_trips)))
+plot.in_city <- plot_styled(ggplot(df, aes(x=household.in_city, y=n_trips)))
+plot.in_countryside <- plot_styled(ggplot(df, aes(x=household.in_countryside, y=n_trips)))
+plot.is_unemployed <- plot_styled(ggplot(df, aes(x=person.is_unemployed, y=n_trips)))
 
-grid.arrange(plot.is_man,
-             plot.has_GA,
-             plot.has_halbtax,
-             plot.has_car,
-             plot.has_bike,
-             plot.has_driverlicence,
-             plot.always_works_from_home,
-             plot.happens_wors_from_home,
-             plot.uses_wheelchair,
-             plot.in_city,
-             plot.in_countryside,
-             plot.is_unemployed,
-             nrow=4)
-
+grid.plot <- grid.arrange(arrangeGrob(plot.is_man,
+                           plot.has_GA,
+                           plot.has_halbtax,
+                           plot.has_car,
+                           plot.has_bike,
+                           plot.has_driverlicence,
+                           plot.always_works_from_home,
+                           plot.happens_wors_from_home,
+                           plot.uses_wheelchair,
+                           plot.in_city,
+                           plot.in_countryside,
+                           plot.is_unemployed,
+                           nrow=4), nrow=1, top = textGrob("Effect of different factor variables on number of trips", gp=gpar(fontsize=15,face="bold")))
+ggsave(grid.plot, filename = "plots/2_plot_dummy_variable.svg")
+ggsave(grid.plot, filename = "plots/2_plot_dummy_variable.png")
 
 #Create factor variable
 df$household.degree_urbanization <- as.factor(df$household.degree_urbanization)
 
-#Making sense of the data
-hist(df$n_trips)
-mean(df$n_trips) # calculate mean
-var(df$n_trips)
-
+###############################################################################
+#Divide into training and test data
+###############################################################################
 df_train <- df[0:45000,]
 df_test <- df[45001:53781,]
 
+###############################################################################
+#Train a negative binomial linear model
+###############################################################################
 lin_model <- glm.nb(n_trips ~  person.has_driverlicence
                  + household.oev_availibility
                  + person.has_GA
@@ -147,18 +175,55 @@ lin_model <- glm.nb(n_trips ~  person.has_driverlicence
 anova(lin_model)
 summary(lin_model)
 par(mfrow = c(2, 2))
-plot(lin_model)
+plot(lin_model) #Plots the different diagnostic plots
 
-df_test$prediction <- exp(predict(lin_model, df_test))
+###############################################################################
+#Test the model
+###############################################################################
+df_test$prediction <- exp(predict(lin_model, df_test)) #Predict on the testset
 
-legend_colors <- c("n_trips" = "red", "prediction" = "blue")
+colors <- wes_palette("GrandBudapest1", n=4, type = "discrete")
+legend_colors <- c("n_trips" = colors[1],  "prediction" = colors[3])
 
-ggplot(data = df_test) + 
-  geom_smooth(aes(x = person.age, y = n_trips, color = "n_trips"), method = "loess") + 
+plot.prediction_on_age <- ggplot(data = df_test) + 
   geom_smooth(aes(x = person.age, y = prediction, color = "prediction"), method="loess") + 
-  labs(color = "the legend") + 
-  scale_color_manual(values = legend_colors) + 
-  theme_bw()
+  geom_smooth(aes(x = person.age, y = n_trips, color = "n_trips"), method = "loess") +
+  labs(color = "Colors") + 
+  scale_color_manual(values = legend_colors, labels=c("true value", "prediction")) + 
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="Age", y="Number of trips", title="Average prediction on test set vs. average value")
+plot.prediction_on_age
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_age_prediction.svg")
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_age_prediction.png")
+
+df_test$error <- df_test$n_trips - df_test$prediction
+plot.error_histogram <- ggplot(data=df_test, aes(x=error)) +
+  geom_histogram(binwidth = 0.5, fill=colors[1]) +
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="test error", y="count", title="Distribution of the test error")
+plot.error_histogram
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_test_error.svg")
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_test_error.png")
 
 df_plot_1 <- df_test%>% dplyr::select(-c("n_trips"))
 df_plot_1["type"] <- "prediction"
@@ -181,7 +246,6 @@ plot_styled <- function(plot){
           axis.title=element_text(size=9)) #Size of axis title
   return(plot)
 }
-
 
 plot.is_man <- ggplot(df_plot, aes(x=person.is_man, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot", aes(fill=type), position = position_dodge(width = 1)) + scale_fill_manual(values=wes_palette("GrandBudapest1", n=2, type = "discrete"), name="") + labs(x="", y="Number of trips") + theme(legend.position="bottom", legend.text=element_text(size=10), legend.title=element_text(size=11, face="bold"), legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"))
 plot.has_GA <- plot_styled(ggplot(df_plot, aes(x=person.has_GA, y=n_trips)))
@@ -206,9 +270,7 @@ g_legend <- function(a.gplot){
 legend <-g_legend(plot.is_man)
 plot.is_man <- plot_styled(ggplot(df_plot, aes(x=person.is_man, y=n_trips)))
 
-library(grid)
-
-grid.arrange(arrangeGrob(plot.is_man,
+plot.error_on_dummy_data <- grid.arrange(arrangeGrob(plot.is_man,
              plot.has_GA,
              plot.has_halbtax,
              plot.has_car,
@@ -221,4 +283,5 @@ grid.arrange(arrangeGrob(plot.is_man,
              plot.in_countryside,
              plot.is_unemployed,
              nrow=4), legend, nrow=2, heights=c(13, 1), top = textGrob("Prediction vs. real values on test set",gp=gpar(fontsize=15,face="bold"))) 
-
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_error_on_dummy_variables.svg")
+ggsave(plot.prediction_on_age, filename = "plots/2_plot_error_on_dummy_variables.png")
