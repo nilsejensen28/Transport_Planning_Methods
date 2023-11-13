@@ -249,6 +249,9 @@ for (i in 1:n){
   sub_vector <- gc_trips[gc_trips$start_row.id==i,]
   for (j in 1:n){
     gc[i, j] <- sub_vector[sub_vector$ziel_row.id==j, "travelTime"][[1]]
+    if(i==j){
+      gc[i, j] <- n*gc[i, j]
+    }
   }
 }
 
@@ -307,7 +310,6 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
 distribution <- ipf(zones, as.matrix(npvm_zones$Pop_Furness), as.matrix(npvm_zones$Empl_Furness), gc)
 
 trips_matrix <- distribution["trips"]$trips
-trips_matrix
 trip_df <- data.frame("start_row.id" = numeric(), "ziel_row.id"= numeric(), "trips"= numeric())
 for (i in 1:n){
   for(j in 1:n){
@@ -338,6 +340,7 @@ scaling_factor <- number_of_cencus_trips/sum(npvm_zones$Pop_Furness)
 
 df <- trip_df[c("start_row.id", "ziel_row.id")]
 df$trips_furness <- trip_df$trips
+df$trips_furness_normalized <- trip_df$trips*scaling_factor
 df$start <- trip_df$start$geometry
 df$end <- trip_df$end$geometry
 for (i in 1:nrow(df)){
@@ -358,27 +361,108 @@ df
 legend_colors <- c("trips_furness" = "red", "trips_census" = "blue")
 
 ggplot(data = df) + 
-  geom_point(aes(x = distance, y = trips_furness, color = "trips_furness")) + 
-  geom_point(aes(x = distance, y = trips_census, color = "trips_census")) + 
+  geom_smooth(aes(x = distance, y = trips_furness_normalized, color = "trips_furness"), method="loess") + 
+  geom_smooth(aes(x = distance, y = trips_census, color = "trips_census"), method="loess") + 
   labs(color = "the legend") + 
   scale_color_manual(values = legend_colors) + 
   theme_bw()
 
 large_towns <- c(89, 82, 95, 25, 22, 13, 65, 99, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
+zurich <- c(132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
 df_id_name_start <- npvm_zones[, c("row_id", "N_Zo")]
 df_id_name_start$start_row.id <- df_id_name_start$row_id
 df_id_name_start$start_name <- df_id_name_start$N_Zo
+df_id_name_start <-  df_id_name_start %>% 
+  dplyr::add_row(start_row.id= 0, row_id= 0, N_Zo= "Zürich", start_name="Zürich")
 df_id_name_ziel <- npvm_zones[, c("row_id", "N_Zo")]
 df_id_name_ziel$ziel_row.id <- df_id_name_ziel$row_id
 df_id_name_ziel$ziel_name <- df_id_name_ziel$N_Zo
 
-
 df_filtered <- df %>% 
   dplyr::filter(start_row.id %in% large_towns) %>% 
   dplyr::filter(ziel_row.id %in% large_towns) %>% 
-  full_join(df_id_name_start, by="start_row.id")
+  left_join(df_id_name_start, by="start_row.id") %>% 
+  left_join(df_id_name_ziel, by="ziel_row.id") %>% 
+  dplyr::select(c("start_row.id", "ziel_row.id", "start_name", "ziel_name", "trips_census", "trips_furness", "trips_furness_normalized"))
+for (i in large_towns){
+  specific_col_sum <- colSums(dplyr::filter(df_filtered[c("start_row.id", "ziel_row.id", "trips_furness", "trips_census", "trips_furness_normalized")], start_row.id %in% zurich & ziel_row.id == i))
+  specific_col_sum <- data.frame(t(specific_col_sum))
+  specific_col_sum$start_row.id <- c(0)
+  specific_col_sum$ziel_row.id <- c(i)
+  specific_col_sum$start_name <- "Zürich"
+  specific_col_sum$ziel_name <- dplyr::filter(df_id_name_ziel, ziel_row.id==i)[1, "ziel_name"][[1]]
+  df_filtered <- df_filtered %>% 
+    filter(!start_row.id %in% zurich | !ziel_row.id == i)
+  df_filtered <- rbind(df_filtered, specific_col_sum)
+}
+for (i in large_towns){
+  specific_col_sum <- colSums(dplyr::filter(df_filtered[c("start_row.id", "ziel_row.id", "trips_furness", "trips_census", "trips_furness_normalized")], start_row.id == i & ziel_row.id %in% zurich))
+  specific_col_sum <- data.frame(t(specific_col_sum))
+  specific_col_sum$start_row.id <- c(i)
+  specific_col_sum$ziel_row.id <- c(0)
+  specific_col_sum$ziel_name <- "Zürich"
+  specific_col_sum$start_name <- dplyr::filter(df_id_name_start, start_row.id==i)[1, "start_name"][[1]]
+  df_filtered <- df_filtered %>% 
+    filter(!ziel_row.id %in% zurich | !start_row.id == i)
+  df_filtered <- rbind(df_filtered, specific_col_sum)
+}
+specific_col_sum = 0
+for (i in zurich){
+  specific_col_sum <- specific_col_sum + colSums(dplyr::filter(df_filtered[c("start_row.id", "ziel_row.id", "trips_furness", "trips_census", "trips_furness_normalized")], start_row.id == 0 & ziel_row.id == i))
+  specific_col_sum <- specific_col_sum + colSums(dplyr::filter(df_filtered[c("start_row.id", "ziel_row.id", "trips_furness", "trips_census", "trips_furness_normalized")], ziel_row.id == 0 & start_row.id == i))
+  df_filtered <- df_filtered %>% 
+    dplyr::filter(!ziel_row.id %in% zurich | !start_row.id == 0) %>% 
+    dplyr::filter(!start_row.id %in% zurich | !ziel_row.id == 0)
+}
+specific_col_sum <- data.frame(t(specific_col_sum))
+specific_col_sum$start_row.id <- c(0)
+specific_col_sum$ziel_row.id <- c(0)
+specific_col_sum$ziel_name <- "Zürich"
+specific_col_sum$start_name <- "Zürich"
+df_filtered <- rbind(df_filtered, specific_col_sum)
 
-ggplot(df, aes(x = start_row.id, y = ziel_row.id, fill = trips_furness)) +
-  geom_tile()
+colors <- wes_palette("Zissou1", n=5, type = "discrete")
+
+plot.furness <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = trips_furness)) +
+  geom_tile(color = "white",
+            lwd = 1.5,
+            linetype = 1) +
+  scale_fill_gradient(low = "#598BF0", high = "#E85959") +  #General tweaks to the theme
+  guides(fill = guide_colourbar(barwidth = 1,
+                                barheight = 15, title="trips")) +
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="Start Zone", y="End Zone", title="Heat map furness method")
+plot.census <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = trips_census)) +
+  geom_tile(color = "white",
+            lwd = 1.5,
+            linetype = 1) +
+  scale_fill_gradient(low = "#598BF0", high = "#E85959") +  #General tweaks to the theme
+  guides(fill = guide_colourbar(barwidth = 1,
+                                barheight = 15, title="trips")) +
+  #General tweaks to the theme
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="Start Zone", y="End Zone", title="Heat map census")
+library(grid)
+grid.arrange(arrangeGrob(plot.census,
+                         plot.furness,
+                         nrow=2), nrow=1) 
 
 
