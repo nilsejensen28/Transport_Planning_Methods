@@ -184,10 +184,10 @@ noTravelTimes <- left_join(noTravelTimes, npvm_centroids[,c("row_id", "geometry"
 
 #Get the Dodgr graph
 coordsOrigin <- do.call(rbind, noTravelTimes$geometry.x) %>% 
-   as.data.frame() %>% setNames(c("lon","lat"))
- 
+  as.data.frame() %>% setNames(c("lon","lat"))
+
 coordsDest <- do.call(rbind, noTravelTimes$geometry.y) %>% 
-   as.data.frame() %>% setNames(c("lon","lat"))
+  as.data.frame() %>% setNames(c("lon","lat"))
 
 library(osmextract)
 
@@ -252,6 +252,7 @@ for (i in 1:n){
   }
 }
 
+gc
 # Furness Method 
 ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix format!
   zones <- as.numeric(zones)
@@ -306,6 +307,7 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
 distribution <- ipf(zones, as.matrix(npvm_zones$Pop_Furness), as.matrix(npvm_zones$Empl_Furness), gc)
 
 trips_matrix <- distribution["trips"]$trips
+trips_matrix
 trip_df <- data.frame("start_row.id" = numeric(), "ziel_row.id"= numeric(), "trips"= numeric())
 for (i in 1:n){
   for(j in 1:n){
@@ -333,3 +335,50 @@ ggplot()+
 #Now check how well the algorithm worked for representing the trips....
 
 scaling_factor <- number_of_cencus_trips/sum(npvm_zones$Pop_Furness)
+
+df <- trip_df[c("start_row.id", "ziel_row.id")]
+df$trips_furness <- trip_df$trips
+df$start <- trip_df$start$geometry
+df$end <- trip_df$end$geometry
+for (i in 1:nrow(df)){
+  distance <- st_distance(df[i, "start"], df[i, "end"])[1, 1]
+  df[i, "distance"] <- distance
+  df_census <- wegeOD %>% 
+    dplyr::filter(start_row.id == df[i, "start_row.id"]) %>% 
+    dplyr::filter(ziel_row.id == df[i, "ziel_row.id"])
+  if(nrow(df_census)==1){
+    df[i, "trips_census"] = df_census[1, "trips"]
+  }
+  else{
+    df[i, "trips_census"] = 0
+  }
+}
+df
+
+legend_colors <- c("trips_furness" = "red", "trips_census" = "blue")
+
+ggplot(data = df) + 
+  geom_point(aes(x = distance, y = trips_furness, color = "trips_furness")) + 
+  geom_point(aes(x = distance, y = trips_census, color = "trips_census")) + 
+  labs(color = "the legend") + 
+  scale_color_manual(values = legend_colors) + 
+  theme_bw()
+
+large_towns <- c(89, 82, 95, 25, 22, 13, 65, 99, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
+df_id_name_start <- npvm_zones[, c("row_id", "N_Zo")]
+df_id_name_start$start_row.id <- df_id_name_start$row_id
+df_id_name_start$start_name <- df_id_name_start$N_Zo
+df_id_name_ziel <- npvm_zones[, c("row_id", "N_Zo")]
+df_id_name_ziel$ziel_row.id <- df_id_name_ziel$row_id
+df_id_name_ziel$ziel_name <- df_id_name_ziel$N_Zo
+
+
+df_filtered <- df %>% 
+  dplyr::filter(start_row.id %in% large_towns) %>% 
+  dplyr::filter(ziel_row.id %in% large_towns) %>% 
+  full_join(df_id_name_start, by="start_row.id")
+
+ggplot(df, aes(x = start_row.id, y = ziel_row.id, fill = trips_furness)) +
+  geom_tile()
+
+

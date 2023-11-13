@@ -85,8 +85,8 @@ min.mean.sd.max <- function(x) {
 }
 
 #Remove outliers
-df <- df %>% 
-  filter(n_trips < 10)
+#df <- df %>% 
+  #filter(n_trips < 10)
 
 #Visualize the different dummy variables
 plot.is_man <- ggplot(df, aes(x=person.is_man, y=n_trips)) + stat_summary(fun.data = min.mean.sd.max, geom = "boxplot") + labs(x="", y="Number of trips")
@@ -130,28 +130,26 @@ var(df$n_trips)
 df_train <- df[0:45000,]
 df_test <- df[45001:53781,]
 
-lin_model <- glm(n_trips ~  person.has_driverlicence
-                + household.oev_availibility
-                + person.has_GA
-                + household.has_bike
-                + person.is_unemployed
-                + person.uses_wheelchair
-                + person.happens_works_from_home
-                + person.always_works_from_home
-                + person.age
-                + household.size
-                + household.size_squared
-                + household.size_log
-                + person.age_squared
-                + person.age_log
-                + household.number_of_cars
-                , data=df_train, family=poisson(link="identity"))
+lin_model <- glm.nb(n_trips ~  person.has_driverlicence
+                 + household.oev_availibility
+                 + person.has_GA
+                 + household.has_bike
+                 + person.is_unemployed
+                 + person.uses_wheelchair
+                 + person.happens_works_from_home
+                 + person.always_works_from_home
+                 + person.age
+                 + person.age_squared
+                 + person.age_log
+                 + household.number_of_cars
+                 , data=df_train)
+
 anova(lin_model)
 summary(lin_model)
 par(mfrow = c(2, 2))
 plot(lin_model)
 
-df_test$prediction <- predict(lin_model, df_test)
+df_test$prediction <- exp(predict(lin_model, df_test))
 
 legend_colors <- c("n_trips" = "red", "prediction" = "blue")
 
