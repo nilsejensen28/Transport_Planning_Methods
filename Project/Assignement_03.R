@@ -1,7 +1,4 @@
-library(data.table)
 library(tidyverse) #Make nice plots
-library(gt) #Make nice tables
-#library(mmtable2) #Make nice tables
 library(wesanderson) #Nice color palette
 library(svglite) #Allows for SVG
 library(MASS)
@@ -11,11 +8,13 @@ library(dplyr)
 library(glmnet)
 library(sf)
 library(ggplot2)
+library(grid) #Layouts the graphs
+library(svglite) #Allows for svg
 
 # options(scipen = 999) #No scientific notation
-############################################################################
-#load Data
-#############################################################################
+################################################################################
+#Load Data
+################################################################################
 df_wegeInland <- read.csv("wegeinland.csv", header=TRUE, sep=";")
 npvm_zones <- read_sf("NPVM2010MetroZH.shp")
 
@@ -26,7 +25,10 @@ df_wegeInland <- df_wegeInland %>%
   dplyr::mutate(weg_id = row_number()) %>%
   relocate(weg_id)
 
-#COnvert to SF to get the trips within the study area
+################################################################################
+#Preprocess data
+################################################################################
+#Convert to SF to get the trips within the study area
 wege_Start <- st_as_sf(df_wegeInland, coords=c("S_X", "S_Y"),
                        crs=4326) #WGS 84 coordinates
 
@@ -55,7 +57,6 @@ wege <- df_wegeInland %>%
   left_join(zone_Start[,c("weg_id", "start_row.id")], by="weg_id") %>%
   left_join(zone_Ziel[,c("weg_id", "ziel_row.id")], by="weg_id") 
 
-
 #Filter the original wege 
 wege <- wege[wege$weg_id %in% zone_Start$weg_id,]
 wege <- wege[wege$weg_id %in% zone_Ziel$weg_id,]
@@ -67,6 +68,9 @@ wege_Ziel <- wege_Ziel[wege_Ziel$weg_id %in% wege$weg_id, ]
 s_x <- wege_Start$geometry
 z_x <- wege_Ziel$geometry
 
+################################################################################
+#Plot the lines
+################################################################################
 #create lines showing the trips
 create_linestring <- function(point1, point2) {
   line <- st_linestring(rbind(point1, point2))
@@ -142,7 +146,9 @@ ggplot() +
 write_sf(od_lines_sf, "old_lines", driver = "GeoJSON")
 write_sf(lines_sf, "new_lines", driver = "GeoJSON")
 
-#-----NOW TO THE FURNESS METHOD-----
+################################################################################
+#Preprocessing for Furness
+################################################################################
 
 #Now calculate the travel time matrix between the zones from the trips data. 
 
@@ -210,7 +216,8 @@ network <- weight_streetnet(network, wt_profile = "motorcar")
 
 noTravelTimes <- noTravelTimes[is.na(noTravelTimes$travelTime),]
 RcppParallel::setThreadOptions (numThreads = 10L) # or desired number
-tt_noTravelTimes <- (dodgr_times(graph=network, from=coordsOrigin, to=coordsDest)) #this takes a while (hours).
+#Use the preprocesses saved data
+#tt_noTravelTimes <- (dodgr_times(graph=network, from=coordsOrigin, to=coordsDest)) #this takes a while (hours).
 #save(tt_noTravelTimes,file="tt_noTravelTimes.Rda")
 load(file="tt_noTravelTimes.Rda")
 tt_noTravelTimes2 <- as.data.frame(tt_noTravelTimes)
@@ -238,8 +245,9 @@ gc_trips$travelTime <- ifelse(is.na(gc_trips$trips), gc_trips$travelTime*1.25, g
 
 #What are the methodological problems with the dodgr approach? Think about what mode is being considered here. 
 
-
-#Now write a function that applies the Furness method!
+################################################################################
+#Furness method
+################################################################################
 #First: set an arbitrary value for travel times 
 zones <- npvm_zones$row_id
 n <- length(zones)
@@ -255,7 +263,6 @@ for (i in 1:n){
   }
 }
 
-gc
 # Furness Method 
 ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix format!
   zones <- as.numeric(zones)
@@ -321,6 +328,9 @@ for (i in 1:n){
 trip_df$start <- left_join(trip_df, npvm_cent_start, by=c("start_row.id"="row_id"))
 trip_df$end <- left_join(trip_df, npvm_cent_end, by=c("ziel_row.id"="row_id"))
 
+################################################################################
+#Plot the results
+################################################################################
 od_lines_sf <- mapply(create_linestring, trip_df$start$geometry, trip_df$end$geometry,
                       SIMPLIFY = FALSE)
 od_lines_sf <- st_sf(geometry = st_sfc(od_lines_sf))
@@ -334,8 +344,10 @@ od_lines_sf <- od_lines_sf %>%
 ggplot()+
   geom_sf(data=npvm_zones, aes(fill=ZonePop))+
   geom_sf(data=od_lines_sf, aes(linewidth = trips))
-#Now check how well the algorithm worked for representing the trips....
 
+################################################################################
+#Validate the results
+################################################################################
 scaling_factor <- number_of_cencus_trips/sum(npvm_zones$Pop_Furness)
 
 df <- trip_df[c("start_row.id", "ziel_row.id")]
@@ -356,16 +368,30 @@ for (i in 1:nrow(df)){
     df[i, "trips_census"] = 0
   }
 }
-df
+df$distance <- df$distance/1000 #Convert distances to km
 
 legend_colors <- c("trips_furness" = "red", "trips_census" = "blue")
 
-ggplot(data = df) + 
+plot.distance_vs_trips <- ggplot(data = df) + 
   geom_smooth(aes(x = distance, y = trips_furness_normalized, color = "trips_furness"), method="loess") + 
   geom_smooth(aes(x = distance, y = trips_census, color = "trips_census"), method="loess") + 
   labs(color = "the legend") + 
   scale_color_manual(values = legend_colors) + 
-  theme_bw()
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        panel.grid.major.y = element_line(color="gray", size=0.4),
+        axis.text=element_text(size=9), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=13, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="Straight line distance (km)", y="Number of trips", title="Effect of distance on number of trips")
+ggsave(plot.distance_vs_trips, filename = "plots/3_plot_distance_vs_trips.svg")
+ggsave(plot.distance_vs_trips, filename = "plots/2_plot_distance_vs_trips.png")
+
 
 large_towns <- c(89, 82, 95, 25, 22, 13, 65, 99, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
 zurich <- c(132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
@@ -384,6 +410,8 @@ df_filtered <- df %>%
   left_join(df_id_name_start, by="start_row.id") %>% 
   left_join(df_id_name_ziel, by="ziel_row.id") %>% 
   dplyr::select(c("start_row.id", "ziel_row.id", "start_name", "ziel_name", "trips_census", "trips_furness", "trips_furness_normalized"))
+
+#Group everything together which is Zurich
 for (i in large_towns){
   specific_col_sum <- colSums(dplyr::filter(df_filtered[c("start_row.id", "ziel_row.id", "trips_furness", "trips_census", "trips_furness_normalized")], start_row.id %in% zurich & ziel_row.id == i))
   specific_col_sum <- data.frame(t(specific_col_sum))
@@ -460,9 +488,9 @@ plot.census <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = tri
         legend.position = "right",
         title = element_text(size=15, face="bold")) + #Size of title
   labs(x="Start Zone", y="End Zone", title="Heat map census")
-library(grid)
-grid.arrange(arrangeGrob(plot.census,
+plot.heatmap <- grid.arrange(arrangeGrob(plot.census,
                          plot.furness,
                          nrow=2), nrow=1) 
-
+ggsave(plot.heatmap, filename = "plots/3_plot_heatmap.svg")
+ggsave(plot.heatmap, filename = "plots/2_plot_heatmap.png")
 
