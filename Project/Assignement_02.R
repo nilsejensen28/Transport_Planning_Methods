@@ -10,7 +10,6 @@ library(ggplot2)
 library(tidyr)
 library(gridExtra) #Make grid plots
 library(svglite) #Allows for SVG Files
-library(ggpubr) #Text grob
 library(grid)
 options(scipen = 999) #No scientific notation
 

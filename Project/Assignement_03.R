@@ -23,6 +23,7 @@ npvm_zones <- read_sf("NPVM2010MetroZH.shp")
 #__________________________
 #Generate an id for trips
 df_wegeInland <- df_wegeInland %>%
+  dplyr::filter(wzweck1 == 2) %>%  #Keep only the commuting trips
   dplyr::mutate(weg_id = row_number()) %>%
   relocate(weg_id)
 
@@ -218,8 +219,8 @@ network <- weight_streetnet(network, wt_profile = "motorcar")
 noTravelTimes <- noTravelTimes[is.na(noTravelTimes$travelTime),]
 RcppParallel::setThreadOptions (numThreads = 10L) # or desired number
 #Use the preprocesses saved data
-#tt_noTravelTimes <- (dodgr_times(graph=network, from=coordsOrigin, to=coordsDest)) #this takes a while (hours).
-#save(tt_noTravelTimes,file="tt_noTravelTimes.Rda")
+tt_noTravelTimes <- (dodgr_times(graph=network, from=coordsOrigin, to=coordsDest)) #this takes a while (hours).
+save(tt_noTravelTimes,file="tt_noTravelTimes.Rda")
 load(file="tt_noTravelTimes.Rda")
 tt_noTravelTimes2 <- as.data.frame(tt_noTravelTimes)
 tt_noTravelTimes2 <- tt_noTravelTimes2[,-1]
@@ -274,8 +275,6 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
   alpha_o_new <- rep(1, n)
   alpha_d_new <- rep(1, n)
   
-  # del is the coefficient assessing the changes of beta after each iteration
-  del <- 1
   # eps is the boundry for ending the iteration
   error_bound <- 0.0000000000001
   
@@ -311,6 +310,7 @@ ipf <- function(zones, outgoing, incoming, gcosts){ #Assumes gc is in matrix for
     if(error < error_bound){
       return(list(iteration=iteration,trips=trips,alpha_o=alpha_o_new,alpha_o_d=alpha_d_new))
     }
+    iteration <- iteration + 1
   }
 }
 
