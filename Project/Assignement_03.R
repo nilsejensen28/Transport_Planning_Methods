@@ -348,7 +348,8 @@ ggplot()+
 ################################################################################
 #Validate the results
 ################################################################################
-scaling_factor <- number_of_cencus_trips/sum(npvm_zones$Pop_Furness)
+#This will be used to normalize the data in comparisons
+scaling_factor <- max(wegeOD$trips)/max(trip_df$trips)
 
 df <- trip_df[c("start_row.id", "ziel_row.id")]
 df$trips_furness <- trip_df$trips
@@ -391,7 +392,7 @@ plot.distance_vs_trips <- ggplot(data = df) +
   labs(x="Straight line distance (km)", y="Number of trips", title="Effect of distance on number of trips")
 ggsave(plot.distance_vs_trips, filename = "plots/3_plot_distance_vs_trips.svg")
 ggsave(plot.distance_vs_trips, filename = "plots/2_plot_distance_vs_trips.png")
-
+plot.distance_vs_trips
 
 large_towns <- c(89, 82, 95, 25, 22, 13, 65, 99, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
 zurich <- c(132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143)
@@ -451,7 +452,7 @@ df_filtered <- rbind(df_filtered, specific_col_sum)
 
 colors <- wes_palette("Zissou1", n=5, type = "discrete")
 
-plot.furness <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = trips_furness)) +
+plot.furness <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = trips_furness_normalized)) +
   geom_tile(color = "white",
             lwd = 1.5,
             linetype = 1) +
@@ -468,7 +469,7 @@ plot.furness <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = tr
         legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
         legend.position = "right",
         title = element_text(size=15, face="bold")) + #Size of title
-  labs(x="Start Zone", y="End Zone", title="Heat map furness method")
+  labs(x="Start Zone", y="End Zone", title="Heat map furness method (normalized)")
 plot.census <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = trips_census)) +
   geom_tile(color = "white",
             lwd = 1.5,
