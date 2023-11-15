@@ -8,7 +8,8 @@ library(dplyr)
 library(glmnet)
 library(sf)
 library(ggplot2)
-library(grid) #Layouts the graphs
+library(grid)
+library(gridExtra) #Layouts the graphs
 library(svglite) #Allows for svg
 
 # options(scipen = 999) #No scientific notation
@@ -489,9 +490,8 @@ plot.census <- ggplot(df_filtered, aes(x = start_name, y = ziel_name, fill = tri
         legend.position = "right",
         title = element_text(size=15, face="bold")) + #Size of title
   labs(x="Start Zone", y="End Zone", title="Heat map census")
-plot.heatmap <- grid.arrange(arrangeGrob(plot.census,
+plot.heatmap <- grid.arrange(plot.census,
                          plot.furness,
-                         nrow=2), nrow=1) 
+                         nrow=1) 
 ggsave(plot.heatmap, filename = "plots/3_plot_heatmap.svg")
-ggsave(plot.heatmap, filename = "plots/2_plot_heatmap.png")
-
+ggsave(plot.heatmap, filename = "plots/3_plot_heatmap.png")
