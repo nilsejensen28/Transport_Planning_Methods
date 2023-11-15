@@ -10,6 +10,8 @@ library(ggplot2)
 library(tidyr)
 library(gridExtra) #Make grid plots
 library(svglite) #Allows for SVG Files
+library(ggpubr) #Text grob
+library(grid)
 options(scipen = 999) #No scientific notation
 
 ################################################################################
@@ -27,7 +29,7 @@ df_personen_trips <- df_personen %>%
   dplyr::summarise(n_trips=n())
 
 #Add all household without trips
-households_with_trips <- unique(df_wegeInland$HHNR)
+households_with_trips <- unique(df_wegeInLand$HHNR)
 df_households_without_trips <- df_hh %>% 
   filter(!(HHNR %in% households_with_trips)) %>% 
   dplyr::select(c("HHNR"))
@@ -283,5 +285,5 @@ plot.error_on_dummy_data <- grid.arrange(arrangeGrob(plot.is_man,
              plot.in_countryside,
              plot.is_unemployed,
              nrow=4), legend, nrow=2, heights=c(13, 1), top = textGrob("Prediction vs. real values on test set",gp=gpar(fontsize=15,face="bold"))) 
-ggsave(plot.prediction_on_age, filename = "plots/2_plot_error_on_dummy_variables.svg")
-ggsave(plot.prediction_on_age, filename = "plots/2_plot_error_on_dummy_variables.png")
+ggsave(plot.error_on_dummy_data, filename = "plots/2_plot_error_on_dummy_variables.svg")
+ggsave(plot.error_on_dummy_data, filename = "plots/2_plot_error_on_dummy_variables.png")
