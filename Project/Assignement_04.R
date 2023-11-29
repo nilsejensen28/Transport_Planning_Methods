@@ -79,6 +79,28 @@ apollo_modelOutput(model)
 
 #Compute VTT: 
 deltaMethod_settings=list(expression=c(VTT_car_min="b_tt_car/b_cost",
-                                       VTT_car_hour="60*b_tt_car/b_cost"
+                                       VTT_car_hour="60*b_tt_car/b_cost",
+                                       VTT_pt_min="b_tt_pt/b_cost",
+                                       VTT_pt_min="60*b_tt_pt/b_cost"
 ))
 apollo_deltaMethod(model, deltaMethod_settings)
+
+predictions_base = apollo_prediction(model, apollo_probabilities, apollo_inputs)
+
+#Compute the elasticities
+compute_elasticity = function(predictions_base, model, apollo_probabilities, parameter, travel_type){
+  database <- dat #Reset the data
+  database[parameter] <- database[parameter]*1.01 #Increase by 1%
+  apollo_inputs = apollo_validateInputs(silent=TRUE)
+  predictions_new = apollo_prediction(model, apollo_probabilities, apollo_inputs)
+  elasticity = log(sum(predictions_new[travel_type])/sum(predictions_base[travel_type]))/log(1.01)
+  database <- dat #Reset the data
+  return(elasticity)
+}
+
+elasticity_pt = compute_elasticity(predictions_base, model, apollo_probabilities, "cost_pt", "pt")
+elasticity_pt
+
+
+cross_elasticity_car = log(sum(predictions_new["car"])/sum(predictions_base["car"]))/log(1.01)
+cross_elasticity_bike = log(sum(predictions_new["bike"])/sum(predictions_base["bike"]))/log(1.01)
