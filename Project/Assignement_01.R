@@ -2,8 +2,6 @@ library(data.table)
 library(magrittr) #Allows to use %>% 
 library(dplyr)
 library(tidyverse) #Make nice plots
-library(gt) #Make nice tables
-library(mmtable2) #Make nice tables
 library(plyr) #Needed for ddply
 library(wesanderson) #Nice color palette
 library(svglite) #Allows for SVG
