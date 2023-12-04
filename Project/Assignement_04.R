@@ -153,7 +153,7 @@ apollo_saveOutput(model)
 #Plot the elasticities
 ################################################################################
 
-plot.elasticities <- ggplot(df_elasticities, aes(x = parameter, y = transport_mode, fill = elasticity)) +
+plot.elasticities <- ggplot(df_elasticities, aes(x = transport_mode, y = parameter, fill = elasticity)) +
   geom_tile(color = "white",
             lwd = 1.5,
             linetype = 1) +
