@@ -4,6 +4,10 @@ library(tidyverse)
 library(sf)
 library(wesanderson) #Nice color palette
 
+################################################################################
+#Load and preprocess the data
+################################################################################
+
 load(file="Data/mzmv_tripsWAlternatives.Rda") 
 
 dat["time_in_pt"] <- dat["totalTravelTime_pt"] -
@@ -27,6 +31,9 @@ dat["precip"] <- sapply(dat$precip, as.numeric)
 
 dat["id"] <- paste(dat$HHNR, dat$WEGNR, sep="_")
 
+################################################################################
+#Initialize the Apollo Framework
+################################################################################
 
 database <- dat #Mandatory to name the data "database"
 
@@ -96,7 +103,9 @@ model = apollo_estimate(apollo_beta, apollo_fixed, apollo_probabilities, apollo_
 
 apollo_modelOutput(model)
 
-#Compute VTT: 
+################################################################################
+#Compute the VTT
+################################################################################
 deltaMethod_settings=list(expression=c(VTT_car_min="b_tt_car/b_cost",
                                        VTT_car_hour="60*b_tt_car/b_cost",
                                        VTT_pt_min="b_tt_pt/b_cost",
@@ -104,12 +113,12 @@ deltaMethod_settings=list(expression=c(VTT_car_min="b_tt_car/b_cost",
 ))
 apollo_deltaMethod(model, deltaMethod_settings)
 apollo_inputs <- apollo_validateInputs()
-predictions_base <- apollo_prediction(model, apollo_probabilities, apollo_inputs)
 
 ################################################################################
 #Compute the elasticities
 ################################################################################
 
+predictions_base <- apollo_prediction(model, apollo_probabilities, apollo_inputs)
 travel_type = c("pt", "car", "bike", "walk")
 parameters = c("cost_pt", "cost_car", "time_in_pt", "time_in_car", "time_in_bike", "time_in_walk", "precip", "solarenergy")
 elasticities <- data.frame(row.names = parameters)
@@ -313,7 +322,9 @@ for (row in c("car", "pt", "bike", "walk")){
   }
 }
 
-df_plot
+################################################################################
+#Plot the predicted data
+################################################################################
 
 plot_modeled_mode_share <- ggplot(df_plot, 
   aes(fill = type, y = percentage, x = place))+ 
