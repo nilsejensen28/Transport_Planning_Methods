@@ -23,8 +23,10 @@ dat <- dat %>%
 dat["waiting_pt"] <- dat["waiting_pt"] + dat["transferWaitingTime_pt"]
 
 dat["solarenergy"] <- sapply(dat$solarenergy, as.numeric)
+dat["precip"] <- sapply(dat$precip, as.numeric)
 
 dat["id"] <- paste(dat$HHNR, dat$WEGNR, sep="_")
+
 
 database <- dat #Mandatory to name the data "database"
 
@@ -40,29 +42,27 @@ apollo_control = list(
 
 #Define your parameters and their starting values. ASC are a must, but define a reference one in apollo_fixed
 
-apollo_beta= c(ASC_car=15.226985, 
-               ASC_pt=13.780258, 
-               ASC_bike=13.532464, 
-               ASC_walk=15.577408, 
-               b_cost=-0.147858, 
-               b_tt_car=-0.094587,
-               b_tt_pt=-0.006622,
-               b_tt_bike=-0.088741,
-               b_tt_walk=-0.043095,
-               b_tt_access=-0.042578,
-               b_tt_waiting=-0.042578,
-               b_tt_egress=-0.058627,
-               b_transfers=-0.165496,
-               b_car_precip=0,
-               b_car_sun=0,
-               b_pt_precip=0,
-               b_pt_sun=0,
-               b_bike_precip=0,
-               b_bike_sun=0,
+apollo_beta= c(ASC_car=0, 
+               ASC_pt=-1.377865, 
+               ASC_bike=-1.891062, 
+               ASC_walk=0.341877, 
+               b_cost=-0.147952, 
+               b_tt_car=-0.094219,
+               b_tt_pt=-0.006232,
+               b_tt_bike=-0.088146,
+               b_tt_walk=-0.088666,
+               b_tt_access=-0.042881,
+               b_tt_waiting=-0.042344,
+               b_transfers=-0.170433,
+               b_tt_egress=-0.058349,
+               b_pt_precip=0.003822,
+               b_pt_sun=-0.005141,
+               b_bike_precip=-0.005946,
+               b_bike_sun=0.014546,
                b_walk_precip=0,
-               b_walk_sun=0
+               b_walk_sun=-0.003108
                )
-apollo_fixed = c()
+apollo_fixed = c("ASC_car")
 
 apollo_probabilities=function(apollo_beta, apollo_inputs, functionality="estimate"){
   
@@ -71,15 +71,14 @@ apollo_probabilities=function(apollo_beta, apollo_inputs, functionality="estimat
   P = list()
   
   V = list()
-  V[["car"]] =   ASC_car  + b_cost * cost_car  +  b_tt_car    * time_in_car   +
-                                               +  b_car_precip * precip       + b_car_sun   * solarenergy
-  V[["pt"]] =    ASC_pt   + b_cost * cost_pt   +  b_tt_pt     * time_in_pt    + b_tt_access * access_pt + b_tt_waiting * waiting_pt + b_transfers * transfers_pt + b_tt_egress * egress_pt + 
-                                               +  b_pt_precip * precip        + b_pt_sun    * solarenergy
-  V[["bike"]] =  ASC_bike +                    +  b_tt_bike   * time_in_bike  +
-                                               +  b_bike_precip * precip      + b_bike_sun  * solarenergy
-  V[["walk"]] =  ASC_walk +                    +  b_tt_walk  * time_in_walk   +
-                                               +  b_walk_precip * precip      + b_walk_sun  * solarenergy
-  
+  V[["car"]] =   ASC_car  + b_cost * cost_car  +  b_tt_car    * time_in_car 
+  V[["pt"]] =    ASC_pt   + b_cost * cost_pt   +  b_tt_pt     * time_in_pt +  b_tt_access * access_pt + b_tt_waiting * waiting_pt + b_transfers * transfers_pt + b_tt_egress * egress_pt + 
+                                                  b_pt_precip * precip       + b_pt_sun   * solarenergy
+  V[["bike"]] =  ASC_bike +                    +  b_tt_bike   * time_in_bike +
+                                                  b_bike_precip * precip       + b_bike_sun   * solarenergy
+  V[["walk"]] =  ASC_walk +                    +  b_tt_walk  * time_in_walk +
+                                                  b_walk_precip * precip       + b_walk_sun   * solarenergy
+
   mnl_settings = list(
     alternatives = c(car=1, pt=2, bike=3, walk=4), #Here the choice values of the choiceVar is associated to each utility function
     avail = list(car=avail_car, pt=avail_pt, bike=avail_bike, walk=avail_walk), #Here we define the variables that represent the availability of each alternative. 
@@ -96,7 +95,6 @@ apollo_inputs=apollo_validateInputs()
 model = apollo_estimate(apollo_beta, apollo_fixed, apollo_probabilities, apollo_inputs)
 
 apollo_modelOutput(model)
-
 
 #Compute VTT: 
 deltaMethod_settings=list(expression=c(VTT_car_min="b_tt_car/b_cost",
@@ -115,19 +113,58 @@ predictions_base <- apollo_prediction(model, apollo_probabilities, apollo_inputs
 travel_type = c("pt", "car", "bike", "walk")
 parameters = c("cost_pt", "cost_car", "time_in_pt", "time_in_car", "time_in_bike", "time_in_walk", "precip", "solarenergy")
 elasticities <- data.frame(row.names = parameters)
+df_elasticities <- data.frame()
 for (param in parameters){
   database[param] <- database[param]*1.01 #Increase by 1%
   apollo_inputs <- apollo_validateInputs(silent=TRUE)
   predictions_new <- apollo_prediction(model, apollo_probabilities, apollo_inputs)
   for (type in travel_type){
-    elasticities[param, type] <- log(sum(predictions_new[type])/sum(predictions_base[type]))/log(1.01)
+    elasticity <- log(sum(predictions_new[type])/sum(predictions_base[type]))/log(1.01)
+    elasticities[param, type] <- elasticity
+    df_new <- data.frame(parameter=c(param),
+                         transport_mode=c(type),
+                         elasticity=c(elasticity))
+    print(df_elasticities)
+    if (nrow(df_elasticities)==0){
+      df_elasticities <- df_new
+    }
+    else{
+      df_elasticities <- df_elasticities %>% dplyr::add_row(df_new)
+    }
   }
   database[param] <- database[param]/1.01 #Revert change
 }
 elasticities
 
+
 #Save the model!
 apollo_saveOutput(model)
+
+################################################################################
+#Plot the elasticities
+################################################################################
+
+plot.elasticities <- ggplot(df_elasticities, aes(x = parameter, y = transport_mode, fill = elasticity)) +
+  geom_tile(color = "white",
+            lwd = 1.5,
+            linetype = 1) +
+  scale_fill_gradient2(low = "#598BF0", mid="white", high = "#E85959") +  #General tweaks to the theme
+  guides(fill = guide_colourbar(barwidth = 1,
+                                barheight = 15, title="elasticities")) +
+  theme(panel.grid = element_blank(), 
+        panel.background = element_rect(fill="white", colour="black", size=0.5, linetype="solid"), #No background and frame
+        axis.text=element_text(size=13), #Size of axis numbering
+        axis.text.x = element_text(angle = 45, hjust=1), #Tilting of axis numbering
+        axis.title=element_text(size=13,face="bold"), #Size of axis title
+        legend.text=element_text(size=13),
+        legend.title=element_text(size=14, face="bold"),
+        legend.background = element_rect(fill="white", color="black", size=0.4, linetype ="solid"),
+        legend.position = "right",
+        title = element_text(size=15, face="bold")) + #Size of title
+  labs(x="Parameter", y="Transport Mode", title="(Cross)-Elasticities of the model")
+ggsave(plot.elasticities, filename = "plots/4_plot_elasticities.svg")
+ggsave(plot.elasticities, filename = "plots/4_plot_elasticities.png")
+plot.elasticities
 
 ################################################################################
 #Apply to the Data from Assignement 3
@@ -278,8 +315,8 @@ for (row in c("car", "pt", "bike", "walk")){
 
 df_plot
 
-ggplot(df_plot, aes(fill = type, 
-                      y = percentage, x = place))+ 
+plot_modeled_mode_share <- ggplot(df_plot, 
+  aes(fill = type, y = percentage, x = place))+ 
   geom_bar(position = "fill", stat = "identity") +
   scale_y_continuous(labels=function(x) x) +      #Needs to be a better way than dividing by 10
   ylab("Mode share") +
@@ -302,7 +339,7 @@ ggplot(df_plot, aes(fill = type,
         legend.position = "right",
         title = element_text(size=15, face="bold")) + #Size of title
   labs(x="Type of trip", y="Mode share", title="Modeled mode share in Zürich")
-ggsave(plot.heatmap, filename = "plots/4_plot_modeled_mode_share.svg")
-ggsave(plot.heatmap, filename = "plots/4_plot_modeled_mode_share.png")
-
+ggsave(plot_modeled_mode_share, filename = "plots/4_plot_modeled_mode_share.svg")
+ggsave(plot_modeled_mode_share, filename = "plots/4_plot_modeled_mode_share.png")
+plot_modeled_mode_share
 

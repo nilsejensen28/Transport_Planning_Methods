@@ -1,0 +1,451 @@
+Model run by nils using Apollo 0.3.1 on R 4.3.2 for Linux.
+Please acknowledge the use of Apollo by citing Hess & Palma (2019)
+  DOI 10.1016/j.jocm.2019.100170
+  www.ApolloChoiceModelling.com
+
+Model name                                  : mode_choice_model
+Model description                           : MNL model with time, cost, and pt frequency and transfers
+Model run at                                : 2023-11-30 16:56:05.24994
+Estimation method                           : bgw
+Model diagnosis                             : Singular convergence
+Number of individuals                       : 112152
+Number of rows in database                  : 112152
+Number of modelled outcomes                 : 112152
+
+Number of cores used                        :  10 
+Model without mixing
+
+LL(start)                                   : -86599.99
+LL at equal shares, LL(0)                   : -130663.6
+LL at observed shares, LL(C)                : -91332.31
+LL(final)                                   : -77042.7
+Rho-squared vs equal shares                  :  0.4104 
+Adj.Rho-squared vs equal shares              :  0.4102 
+Rho-squared vs observed shares               :  0.1565 
+Adj.Rho-squared vs observed shares           :  0.1563 
+AIC                                         :  154127.4 
+BIC                                         :  154329.6 
+
+Estimated parameters                        : 21
+Time taken (hh:mm:ss)                       :  00:04:11.26 
+     pre-estimation                         :  00:03:54.83 
+     estimation                             :  00:00:11.61 
+     post-estimation                        :  00:00:4.82 
+Iterations                                  :  16 (Singular convergence) 
+
+Unconstrained optimisation.
+
+Estimates:
+                 Estimate        s.e.   t.rat.(0)    Rob.s.e. Rob.t.rat.(0)
+ASC_car         15.416459          NA          NA          NA            NA
+ASC_pt          14.038589          NA          NA          NA            NA
+ASC_bike        13.525395          NA          NA          NA            NA
+ASC_walk        15.758348          NA          NA          NA            NA
+b_cost          -0.147952          NA          NA          NA            NA
+b_tt_car        -0.094220          NA          NA          NA            NA
+b_tt_pt         -0.006232          NA          NA          NA            NA
+b_tt_bike       -0.088146          NA          NA          NA            NA
+b_tt_walk       -0.088667          NA          NA          NA            NA
+b_tt_access     -0.042882          NA          NA          NA            NA
+b_tt_waiting    -0.042344          NA          NA          NA            NA
+b_tt_egress     -0.058349          NA          NA          NA            NA
+b_transfers     -0.170432          NA          NA          NA            NA
+b_car_precip     0.008235          NA          NA          NA            NA
+b_car_sun       -0.004886          NA          NA          NA            NA
+b_pt_precip      0.002594          NA          NA          NA            NA
+b_pt_sun        -0.009931          NA          NA          NA            NA
+b_bike_precip   -0.001533          NA          NA          NA            NA
+b_bike_sun       0.014801          NA          NA          NA            NA
+b_walk_precip    0.003928          NA          NA          NA            NA
+b_walk_sun      -0.002853          NA          NA          NA            NA
+
+
+Overview of choices for MNL model component :
+                                      car       pt      bike     walk
+Times available                  89886.00 82644.00 107509.00 90492.00
+Times chosen                     65261.00 10963.00  10872.00 25056.00
+Percentage chosen overall           58.19     9.78      9.69    22.34
+Percentage chosen when available    72.60    13.27     10.11    27.69
+
+
+
+Classical covariance matrix:
+                    ASC_car        ASC_pt      ASC_bike      ASC_walk        b_cost      b_tt_car       b_tt_pt     b_tt_bike
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                  b_tt_walk   b_tt_access  b_tt_waiting   b_tt_egress   b_transfers  b_car_precip     b_car_sun   b_pt_precip
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                   b_pt_sun b_bike_precip    b_bike_sun b_walk_precip    b_walk_sun
+ASC_car                  NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA
+
+Robust covariance matrix:
+                    ASC_car        ASC_pt      ASC_bike      ASC_walk        b_cost      b_tt_car       b_tt_pt     b_tt_bike
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                  b_tt_walk   b_tt_access  b_tt_waiting   b_tt_egress   b_transfers  b_car_precip     b_car_sun   b_pt_precip
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                   b_pt_sun b_bike_precip    b_bike_sun b_walk_precip    b_walk_sun
+ASC_car                  NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA
+
+Classical correlation matrix:
+                    ASC_car        ASC_pt      ASC_bike      ASC_walk        b_cost      b_tt_car       b_tt_pt     b_tt_bike
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                  b_tt_walk   b_tt_access  b_tt_waiting   b_tt_egress   b_transfers  b_car_precip     b_car_sun   b_pt_precip
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                   b_pt_sun b_bike_precip    b_bike_sun b_walk_precip    b_walk_sun
+ASC_car                  NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA
+
+Robust correlation matrix:
+                    ASC_car        ASC_pt      ASC_bike      ASC_walk        b_cost      b_tt_car       b_tt_pt     b_tt_bike
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                  b_tt_walk   b_tt_access  b_tt_waiting   b_tt_egress   b_transfers  b_car_precip     b_car_sun   b_pt_precip
+ASC_car                  NA            NA            NA            NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA            NA            NA            NA
+                   b_pt_sun b_bike_precip    b_bike_sun b_walk_precip    b_walk_sun
+ASC_car                  NA            NA            NA            NA            NA
+ASC_pt                   NA            NA            NA            NA            NA
+ASC_bike                 NA            NA            NA            NA            NA
+ASC_walk                 NA            NA            NA            NA            NA
+b_cost                   NA            NA            NA            NA            NA
+b_tt_car                 NA            NA            NA            NA            NA
+b_tt_pt                  NA            NA            NA            NA            NA
+b_tt_bike                NA            NA            NA            NA            NA
+b_tt_walk                NA            NA            NA            NA            NA
+b_tt_access              NA            NA            NA            NA            NA
+b_tt_waiting             NA            NA            NA            NA            NA
+b_tt_egress              NA            NA            NA            NA            NA
+b_transfers              NA            NA            NA            NA            NA
+b_car_precip             NA            NA            NA            NA            NA
+b_car_sun                NA            NA            NA            NA            NA
+b_pt_precip              NA            NA            NA            NA            NA
+b_pt_sun                 NA            NA            NA            NA            NA
+b_bike_precip            NA            NA            NA            NA            NA
+b_bike_sun               NA            NA            NA            NA            NA
+b_walk_precip            NA            NA            NA            NA            NA
+b_walk_sun               NA            NA            NA            NA            NA
+
+ 20 worst outliers in terms of lowest average per choice prediction:
+      row Avg prob per choice
+ 315508_2        2.079324e-30
+ 337038_1        5.388155e-22
+ 450497_1        5.034715e-19
+ 284291_1        2.063870e-18
+ 284291_2        6.883943e-18
+ 450497_2        2.364711e-16
+ 356451_1        8.122492e-16
+ 284586_2        1.209284e-15
+ 329961_1        8.174693e-15
+ 120131_2        9.610430e-15
+ 258318_1        2.376221e-14
+ 145365_2        9.187271e-12
+ 339643_1        1.059945e-11
+ 318546_2        2.159367e-11
+ 247675_2        2.398983e-11
+ 357915_1        3.534183e-11
+ 134879_2        8.830752e-11
+ 243739_1        1.818150e-10
+ 133879_1        2.619067e-10
+ 315387_1        2.810044e-10
+
+Changes in parameter estimates from starting values:
+                  Initial    Estimate  Difference
+ASC_car         15.226985   15.416459    0.189474
+ASC_pt          13.780258   14.038589    0.258331
+ASC_bike        13.532464   13.525395   -0.007069
+ASC_walk        15.577408   15.758348    0.180940
+b_cost          -0.147858   -0.147952  -9.408e-05
+b_tt_car        -0.094587   -0.094220  3.6674e-04
+b_tt_pt         -0.006622   -0.006232  3.9014e-04
+b_tt_bike       -0.088741   -0.088146  5.9468e-04
+b_tt_walk       -0.043095   -0.088667   -0.045572
+b_tt_access     -0.042578   -0.042882 -3.0354e-04
+b_tt_waiting    -0.042578   -0.042344  2.3357e-04
+b_tt_egress     -0.058627   -0.058349  2.7796e-04
+b_transfers     -0.165496   -0.170432   -0.004936
+b_car_precip     0.000000    0.008235    0.008235
+b_car_sun        0.000000   -0.004886   -0.004886
+b_pt_precip      0.000000    0.002594    0.002594
+b_pt_sun         0.000000   -0.009931   -0.009931
+b_bike_precip    0.000000   -0.001533   -0.001533
+b_bike_sun       0.000000    0.014801    0.014801
+b_walk_precip    0.000000    0.003928    0.003928
+b_walk_sun       0.000000   -0.002853   -0.002853
+
+Settings and functions used in model definition:
+
+apollo_control
+--------------
+                       Value                                                      
+modelName              "mode_choice_model"                                        
+modelDescr             "MNL model with time, cost, and pt frequency and transfers"
+indivID                "id"                                                       
+outputDirectory        "MNL_model_storage/apollo/ZZ/"                             
+panelData              "FALSE"                                                    
+nCores                 "10"                                                       
+debug                  "FALSE"                                                    
+workInLogs             "FALSE"                                                    
+seed                   "13"                                                       
+mixing                 "FALSE"                                                    
+HB                     "FALSE"                                                    
+noValidation           "FALSE"                                                    
+noDiagnostics          "FALSE"                                                    
+calculateLLC           "TRUE"                                                     
+analyticGrad           "TRUE"                                                     
+analyticGrad_manualSet "FALSE"                                                    
+overridePanel          "FALSE"                                                    
+preventOverridePanel   "FALSE"                                                    
+noModification         "FALSE"                                                    
+
+Hessian routines attempted
+--------------------------
+none
+
+
+apollo_probabilities
+----------------------
+function(apollo_beta, apollo_inputs, functionality="estimate"){
+  
+  apollo_attach(apollo_beta, apollo_inputs)
+  on.exit(apollo_detach(apollo_beta, apollo_inputs))
+  P = list()
+  
+  V = list()
+  V[["car"]] =   ASC_car  + b_cost * cost_car  +  b_tt_car    * time_in_car   +
+                                               +  b_car_precip * precip       + b_car_sun   * solarenergy
+  V[["pt"]] =    ASC_pt   + b_cost * cost_pt   +  b_tt_pt     * time_in_pt    + b_tt_access * access_pt + b_tt_waiting * waiting_pt + b_transfers * transfers_pt + b_tt_egress * egress_pt + 
+                                               +  b_pt_precip * precip        + b_pt_sun    * solarenergy
+  V[["bike"]] =  ASC_bike +                    +  b_tt_bike   * time_in_bike  +
+                                               +  b_bike_precip * precip      + b_bike_sun  * solarenergy
+  V[["walk"]] =  ASC_walk +                    +  b_tt_walk  * time_in_walk   +
+                                               +  b_walk_precip * precip      + b_walk_sun  * solarenergy
+  
+  mnl_settings = list(
+    alternatives = c(car=1, pt=2, bike=3, walk=4), #Here the choice values of the choiceVar is associated to each utility function
+    avail = list(car=avail_car, pt=avail_pt, bike=avail_bike, walk=avail_walk), #Here we define the variables that represent the availability of each alternative. 
+    choiceVar = CHOICE,
+    utilities = V
+  )
+  
+  P[["model"]] = apollo_mnl(mnl_settings, functionality)
+  
+  P = apollo_prepareProb(P, apollo_inputs, functionality)
+  return(P)
+}
+<bytecode: 0x564ab5130e80>
