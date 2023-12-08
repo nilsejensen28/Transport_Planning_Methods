@@ -11,6 +11,12 @@ nodes_pt <- read_sf("Data/Shapefiles/nodes_PTNet.shp")
 nodes_car <- read_sf("Data/Shapefiles/nodes_carNet.shp")
 npvm_zones <- read_sf("NPVM2010MetroZH.shp")
 npvm_zones <- st_transform(npvm_zones, crs=2056) #transform from LV95 to WGS 84 coordinates
+npvm_zones_2 <- st_union(st_buffer(npvm_zones,100000))
+
+links_pt <- st_intersection(links_pt, npvm_zones_2)
+links_car <- st_intersection(links_car, npvm_zones_2)
+nodes_pt <- st_intersection(nodes_pt, npvm_zones_2)
+nodes_car <- st_intersection(nodes_car, npvm_zones_2)
 
 links_car$start_coord <- st_startpoint(links_car$geometry)
 links_car$end_coord <- st_endpoint(links_car$geometry)
@@ -170,8 +176,9 @@ pt_od
 
 #Merge the two dataframes to get a combined PT and MIV OD matrix:
 od_matrix <- merge(miv_od, pt_od, by=c("start_zone", "end_zone"))
-od_matrix
+od_matrix %>% dplyr::rename(tt_car = tt.x, tt_pt = tt.y)
 #_________________________________________________________________________________________
 #Demand predictions in scenarios: 
 
 # You want to manipulate the df_miv or df_pt dataframes which are representations of the respective network before generating the graph from them. 
+
