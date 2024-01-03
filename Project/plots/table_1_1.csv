@@ -1,4 +1,4 @@
-"","Density","Number.of.trips","People","Average.daily.trips"
-"1","Cities","40647","13844","2.936073"
-"2","Smaller Cities","93227","32052","2.908617"
-"3","Countryside","26153","9122","2.867025"
+"","W_DEGURBA","avg_trips","pct_no_trips","n_no_trips","n_indiv"
+"1","Cities",2.78145031894005,0.163392083212944,2262,13844
+"2","Smaller Cities",2.74739384516216,0.176026457007363,5642,32052
+"3","Countryside",2.72023697472179,0.182854637140978,1668,9122
